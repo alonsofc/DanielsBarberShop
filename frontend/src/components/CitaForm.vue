@@ -49,6 +49,7 @@ export default {
     data() {
         return {
             cita: {
+                id: null,
                 dia: '',
                 horaInicio: '',
                 horaFin: '',
@@ -82,9 +83,11 @@ export default {
             this.resetForm();
             this.cita.dia = this.formatLocalDate(dateTime);
             this.cita.horaInicio = this.formatLocalTime(dateTime);
+            this.cita.id = null;
 
             if (existingCita) {
                 const [cliente, servicio] = existingCita.title.split(' (');
+                this.cita.id = existingCita.id;
                 this.cita.cliente = cliente;
                 this.cita.servicio = servicio.slice(0, -1);
                 this.cita.horaFin = this.formatLocalTime(existingCita.end);
@@ -126,17 +129,28 @@ export default {
                     title: `${this.cita.cliente} (${this.cita.servicio})`
                 };
 
-                await axios.post('http://localhost:3000/citas', appointment);
+                if (this.cita.id) {
+                    // Si hay una cita existente, actualiza la cita en lugar de crear una nueva
+                    await axios.put(`http://localhost:3000/citas/${this.cita.id}`, appointment);
+                    alert('Cita actualizada con éxito:', this.cita);
+                } else {
+                    // Si no hay cita existente, crea una nueva cita
+                    await axios.post('http://localhost:3000/citas', appointment);
+                    alert('Cita registrada con éxito:', this.cita);
+                }
 
-                alert('Cita registrada con éxito:', this.cita);
+                this.$emit('cerrarModal');
+                this.$emit('citaGuardada');
 
                 this.resetForm();
             } catch (error) {
                 console.error('Error al enviar la cita:', error);
             }
         },
+
         resetForm() {
             this.cita = {
+                id: null,
                 dia: '',
                 horaInicio: '',
                 horaFin: '',

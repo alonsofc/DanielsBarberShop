@@ -23,7 +23,7 @@
                     <button type="button" class="btn-close" @click="closeModal"></button>
                 </div>
                 <div class="modal-body">
-                    <CitaForm ref="citaForm" :selectedDateTime="selectedDateTime" />
+                    <CitaForm ref="citaForm" :selectedDateTime="selectedDateTime" @citaGuardada="handleCitaGuardada" />
                 </div>
             </div>
         </div>
@@ -78,6 +78,7 @@ export default {
             try {
                 const response = await axios.get('http://localhost:3000/citas');
                 this.citas = response.data.map(cita => ({
+                    id: cita.id,
                     title: cita.title,
                     start: new Date(cita.start),
                     end: new Date(cita.end),
@@ -128,6 +129,10 @@ export default {
                 this.$refs.citaForm.initialize(this.selectedDateTime, existingCita);
                 this.openModal();
             }
+        },
+        handleCitaGuardada() {
+            this.getCitas();
+            this.closeModal();
         },
         getExistingCita(dateTime) {
             return this.citas.find((cita) =>

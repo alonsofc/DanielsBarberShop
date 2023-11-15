@@ -1,8 +1,7 @@
-// /backend/index.js
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const sequelize = require("./db"); // Importa la instancia de Sequelize
+const sequelize = require("./db");
 const citasRoutes = require("./routes/citasRoutes");
 
 const app = express();

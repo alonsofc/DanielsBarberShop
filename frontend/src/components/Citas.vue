@@ -4,15 +4,6 @@
             <img src="../assets/logo.jpg" alt="Daniel's Barber Shop" class="mr-3" width="50" height="50" />
             <h1 class="text-light m-0">Daniel's Barber Shop</h1>
         </div>
-        <!-- <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="wider-calendar bg-light p-3">
-                        <FullCalendar ref="fullCalendar" :options="calendarOptions" />
-                    </div>
-                </div>
-            </div>
-        </div> -->
         <div class="container bg-light pt-3">
             <FullCalendar ref="fullCalendar" :options="calendarOptions" />
         </div>
@@ -39,7 +30,8 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import esLocale from '@fullcalendar/core/locales/es'
-import axios from 'axios';
+import { api } from '../configs/axiosConfig.js';
+import { toast } from "../configs/toastConfig.js";
 import CitaForm from './CitaForm.vue';
 
 export default {
@@ -62,7 +54,6 @@ export default {
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    // right: 'dayGridMonth,timeGridWeek,timeGridDay'
                     right: 'dayGridMonth,timeGridDay'
                 },
                 validRange: {
@@ -82,9 +73,8 @@ export default {
     },
     methods: {
         async getCitas() {
-            try {
-                const response = await axios.get('http://localhost:3000/citas');
-                this.citas = response.data.map(cita => ({
+            const handleSuccess = (response) => {
+                this.citas = response.map(cita => ({
                     id: cita.id,
                     title: cita.title,
                     start: new Date(cita.start),
@@ -92,9 +82,9 @@ export default {
                     color: this.getColorForService(cita.title)
                 }));
                 this.calendarOptions.events = this.citas;
-            } catch (error) {
-                console.error(error);
-            }
+            };
+
+            await api.getRequest("", handleSuccess);
         },
         setupCalendarEvents() {
             const fullCalendarApi = this.$refs.fullCalendar.getApi();
@@ -131,8 +121,9 @@ export default {
                 if (hours < 9 || (hours === 9 && minutes === 0)) {
                     return "09:00:00";
                 } else {
-                    const roundedHour = minutes > 0 ? hours + 1 : hours;
-                    return `${String(roundedHour).padStart(2, '0')}:00:00`;
+                    const roundedHour = (minutes >= 30) ? hours + 1 : hours;
+                    const roundedMinutes = (minutes >= 30) ? 0 : 30;
+                    return `${String(roundedHour).padStart(2, '0')}:${String(roundedMinutes).padStart(2, '0')}:00`;
                 }
             } else {
                 return "09:00:00";
@@ -162,9 +153,8 @@ export default {
                 if (!this.citas || !this.hasConflicts(arg.date)) {
                     this.$refs.citaForm.initialize(this.selectedDateTime);
                     this.openModal();
-                } else {
-                    alert('Ya existe una cita en este horario.');
-                }
+                } else
+                    toast.warning("Ya existe una cita a esta misma hora.");
             }
             else {
                 fullCalendarApi.gotoDate(arg.date);

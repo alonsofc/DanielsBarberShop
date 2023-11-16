@@ -40,7 +40,8 @@
 </template>
   
 <script>
-import axios from 'axios';
+import { api } from '../configs/axiosConfig.js';
+import { toast } from "../configs/toastConfig.js";
 
 export default {
     props: {
@@ -65,8 +66,14 @@ export default {
         timeOptionsDe() {
             const options = [];
             const currentDate = new Date();
-            const currentHour = currentDate.getHours();
-            const currentMinute = currentDate.getMinutes();
+            let currentHour = currentDate.getHours();
+            let currentMinute = currentDate.getMinutes();
+
+            if (this.selectedDateTime !== null && (this.selectedDateTime.getDate() !== currentDate.getDate())) {
+                currentHour = 0;
+                currentMinute = 0;
+            }
+
             const startHour = (currentHour < 9) ? 9 : currentHour;
             const startMinute = (currentHour < 9) ? 0 : Math.ceil(currentMinute / 30) * 30;
 
@@ -85,6 +92,10 @@ export default {
         },
         timeOptionsA() {
             const options = this.timeOptionsDe.map(option => ({ ...option }));
+
+            if (options.length > 0)
+                options.shift();
+
             options.push({
                 value: '22:00',
                 label: '10:00 PM',
@@ -92,13 +103,14 @@ export default {
 
             return options;
         },
+
     },
     methods: {
         initialize(dateTime, existingCita = null) {
             this.resetForm();
+
             this.cita.dia = this.formatLocalDate(dateTime);
             this.cita.horaInicio = this.formatLocalTime(dateTime);
-            this.cita.id = null;
 
             if (existingCita) {
                 const [cliente, servicio] = existingCita.title.split(' (');
@@ -135,6 +147,11 @@ export default {
         },
         async submitForm() {
             try {
+                if (this.compareTimes(this.cita.horaInicio, this.cita.horaFin)) {
+                    toast.warning("La hora de fin debe ser posterior a la hora de inicio.");
+                    return;
+                }
+
                 var initDate = this.parseDateString(`${this.cita.dia} ${this.cita.horaInicio}`);
                 var endDate = this.parseDateString(`${this.cita.dia} ${this.cita.horaFin}`);
 
@@ -144,25 +161,27 @@ export default {
                     title: `${this.cita.cliente} (${this.cita.servicio})`
                 };
 
+                const handleSuccess = (response) => {
+                    this.$emit('cerrarModal');
+                    this.$emit('citaGuardada');
+                };
+
                 if (this.cita.id) {
                     // Si hay una cita existente, actualiza la cita en lugar de crear una nueva
-                    await axios.put(`http://localhost:3000/citas/${this.cita.id}`, appointment);
-                    alert('Cita actualizada con éxito:', this.cita);
+                    await api.putRequest(`/${this.cita.id}`, appointment, handleSuccess);
                 } else {
                     // Si no hay cita existente, crea una nueva cita
-                    await axios.post('http://localhost:3000/citas', appointment);
-                    alert('Cita registrada con éxito:', this.cita);
+                    await api.postRequest("", appointment, handleSuccess);
                 }
-
-                this.$emit('cerrarModal');
-                this.$emit('citaGuardada');
-
-                this.resetForm();
             } catch (error) {
                 console.error('Error al enviar la cita:', error);
             }
         },
-
+        compareTimes(startTime, endTime) {
+            const start = new Date(`2000-01-01T${startTime}`);
+            const end = new Date(`2000-01-01T${endTime}`);
+            return start >= end;
+        },
         resetForm() {
             this.cita = {
                 id: null,

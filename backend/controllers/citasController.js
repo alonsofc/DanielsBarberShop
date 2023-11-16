@@ -61,8 +61,34 @@ const updateCita = async (req, res) => {
   }
 };
 
+const deleteCita = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedRowsCount = await Cita.destroy({
+      where: { id: id },
+    });
+
+    if (deletedRowsCount > 0) {
+      res.status(200).json({
+        success: true,
+        message: "Cita eliminada con éxito.",
+      });
+    } else {
+      res.status(404).json({ success: false, message: "Cita no encontrada." });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error al eliminar la cita.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllCitas,
   createCita,
   updateCita,
+  deleteCita,
 };

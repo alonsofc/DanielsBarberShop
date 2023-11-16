@@ -29,10 +29,6 @@
 
         <div class="mb-3">
             <label for="servicio" class="form-label">Servicio</label>
-            <!-- <select v-model="cita.servicio" class="form-select" id="servicio" required>
-                <option value="Corte">{{ $config.optionCorte }}</option>
-                <option value="Tatuaje">{{ $config.optionTatuaje }}</option>
-            </select> -->
             <select v-model="cita.servicio" class="form-select" id="servicio" required>
                 <option :value="getCorteOptionValue()">{{ $config.optionCorte }}</option>
                 <option :value="getTatuajeOptionValue()">{{ $config.optionTatuaje }}</option>

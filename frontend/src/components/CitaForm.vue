@@ -29,9 +29,13 @@
 
         <div class="mb-3">
             <label for="servicio" class="form-label">Servicio</label>
+            <!-- <select v-model="cita.servicio" class="form-select" id="servicio" required>
+                <option value="Corte">{{ $config.optionCorte }}</option>
+                <option value="Tatuaje">{{ $config.optionTatuaje }}</option>
+            </select> -->
             <select v-model="cita.servicio" class="form-select" id="servicio" required>
-                <option value="Corte">Corte</option>
-                <option value="Tatuaje">Tatuaje</option>
+                <option :value="getCorteOptionValue()">{{ $config.optionCorte }}</option>
+                <option :value="getTatuajeOptionValue()">{{ $config.optionTatuaje }}</option>
             </select>
         </div>
 
@@ -55,7 +59,7 @@ export default {
                 horaInicio: '',
                 horaFin: '',
                 cliente: '',
-                servicio: 'Corte'
+                servicio: this.$config.optionCorte
             }
         };
     },
@@ -74,10 +78,13 @@ export default {
                 currentMinute = 0;
             }
 
-            const startHour = (currentHour < 9) ? 9 : currentHour;
-            const startMinute = (currentHour < 9) ? 0 : Math.ceil(currentMinute / 30) * 30;
+            const defaultStartTime = parseInt(this.$config.defaultStartTime.slice(0, 2));
+            const defaultEndTime = parseInt(this.$config.defaultEndTime.slice(0, 2));
 
-            for (let hours = startHour; hours <= 21; hours++) {
+            const startHour = (currentHour < defaultStartTime) ? defaultStartTime : currentHour;
+            const startMinute = (currentHour < defaultStartTime) ? 0 : Math.ceil(currentMinute / 30) * 30;
+
+            for (let hours = startHour; hours < defaultEndTime; hours++) {
                 for (let minutes = (hours === startHour) ? startMinute : 0; minutes < 60; minutes += 30) {
                     const period = hours >= 12 ? 'PM' : 'AM';
                     const formattedHours = hours % 12 || 12;
@@ -97,8 +104,8 @@ export default {
                 options.shift();
 
             options.push({
-                value: '22:00',
-                label: '10:00 PM',
+                value: this.$config.defaultEndTime.slice(0, -3),
+                label: this.$config.defaultLabelEndTime,
             });
 
             return options;
@@ -146,41 +153,42 @@ export default {
             return dateObject;
         },
         async submitForm() {
-            try {
-                if (this.compareTimes(this.cita.horaInicio, this.cita.horaFin)) {
-                    toast.warning("La hora de fin debe ser posterior a la hora de inicio.");
-                    return;
-                }
+            if (this.compareTimes(this.cita.horaInicio, this.cita.horaFin)) {
+                toast.warning("La hora de fin debe ser posterior a la hora de inicio.");
+                return;
+            }
 
-                var initDate = this.parseDateString(`${this.cita.dia} ${this.cita.horaInicio}`);
-                var endDate = this.parseDateString(`${this.cita.dia} ${this.cita.horaFin}`);
+            var initDate = this.parseDateString(`${this.cita.dia} ${this.cita.horaInicio}`);
+            var endDate = this.parseDateString(`${this.cita.dia} ${this.cita.horaFin}`);
 
-                const appointment = {
-                    start: initDate,
-                    end: endDate,
-                    title: `${this.cita.cliente} (${this.cita.servicio})`
-                };
+            const appointment = {
+                start: initDate,
+                end: endDate,
+                title: `${this.cita.cliente} (${this.cita.servicio})`
+            };
 
-                const handleSuccess = (response) => {
-                    this.$emit('cerrarModal');
-                    this.$emit('citaGuardada');
-                };
+            const handleSuccess = (response) => {
+                this.$emit('citaGuardada');
+            };
 
-                if (this.cita.id) {
-                    // Si hay una cita existente, actualiza la cita en lugar de crear una nueva
-                    await api.putRequest(`/${this.cita.id}`, appointment, handleSuccess);
-                } else {
-                    // Si no hay cita existente, crea una nueva cita
-                    await api.postRequest("", appointment, handleSuccess);
-                }
-            } catch (error) {
-                console.error('Error al enviar la cita:', error);
+            if (this.cita.id) {
+                // Si hay una cita existente, actualiza la cita en lugar de crear una nueva
+                await api.putRequest(`/${this.cita.id}`, appointment, handleSuccess);
+            } else {
+                // Si no hay cita existente, crea una nueva cita
+                await api.postRequest("", appointment, handleSuccess);
             }
         },
         compareTimes(startTime, endTime) {
             const start = new Date(`2000-01-01T${startTime}`);
             const end = new Date(`2000-01-01T${endTime}`);
             return start >= end;
+        },
+        getCorteOptionValue() {
+            return this.$config.optionCorte;
+        },
+        getTatuajeOptionValue() {
+            return this.$config.optionTatuaje;
         },
         resetForm() {
             this.cita = {
@@ -189,7 +197,7 @@ export default {
                 horaInicio: '',
                 horaFin: '',
                 cliente: '',
-                servicio: 'Corte'
+                servicio: this.$config.optionCorte
             };
         }
     },

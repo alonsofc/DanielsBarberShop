@@ -2,7 +2,7 @@
     <div>
         <div class="header-container p-2 d-flex align-items-center justify-content-center">
             <img src="../assets/logo.jpg" alt="Daniel's Barber Shop" class="mr-3" width="50" height="50" />
-            <h1 class="text-light m-0">Daniel's Barber Shop</h1>
+            <h1 class="text-light m-0">{{ $config.ProjectName }}</h1>
         </div>
         <div class="container bg-light pt-3">
             <FullCalendar ref="fullCalendar" :options="calendarOptions" />
@@ -61,8 +61,8 @@ export default {
                 },
                 slotDuration: '00:30:00',
                 slotLabelInterval: { minutes: 30 },
-                slotMinTime: '09:00:00',
-                slotMaxTime: '22:00:00',
+                slotMinTime: this.$config.defaultStartTime,
+                slotMaxTime: this.$config.defaultEndTime,
                 slotLabelContent: this.customSlotLabelContent,
             }
         };
@@ -101,8 +101,8 @@ export default {
                 const servicio = regexResult[1];
 
                 const colorMapping = {
-                    'Corte': '#7D3C98',
-                    'Tatuaje': '#1C2833',
+                    'Corte': this.$config.colorCorte,
+                    'Tatuaje': this.$config.colorTatuaje,
                 };
 
                 return colorMapping[servicio];
@@ -117,16 +117,17 @@ export default {
             if (isToday) {
                 const hours = currentDate.getHours();
                 const minutes = currentDate.getMinutes();
+                const defaultStartTime = parseInt(this.$config.defaultStartTime.slice(0, 2));
 
-                if (hours < 9 || (hours === 9 && minutes === 0)) {
-                    return "09:00:00";
+                if (hours < defaultStartTime || (hours === defaultStartTime && minutes === 0)) {
+                    return this.$config.defaultStartTime;
                 } else {
                     const roundedHour = (minutes >= 30) ? hours + 1 : hours;
                     const roundedMinutes = (minutes >= 30) ? 0 : 30;
                     return `${String(roundedHour).padStart(2, '0')}:${String(roundedMinutes).padStart(2, '0')}:00`;
                 }
             } else {
-                return "09:00:00";
+                return this.$config.defaultStartTime;
             }
         },
         isSameDate: function (date1, date2) {

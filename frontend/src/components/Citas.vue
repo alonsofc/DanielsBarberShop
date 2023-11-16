@@ -4,7 +4,7 @@
             <img src="../assets/logo.jpg" alt="Daniel's Barber Shop" class="mr-3" width="50" height="50" />
             <h1 class="text-light m-0">Daniel's Barber Shop</h1>
         </div>
-        <div class="container">
+        <!-- <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-8">
                     <div class="wider-calendar bg-light p-3">
@@ -12,6 +12,9 @@
                     </div>
                 </div>
             </div>
+        </div> -->
+        <div class="container bg-light pt-3">
+            <FullCalendar ref="fullCalendar" :options="calendarOptions" />
         </div>
     </div>
 
@@ -62,6 +65,9 @@ export default {
                     // right: 'dayGridMonth,timeGridWeek,timeGridDay'
                     right: 'dayGridMonth,timeGridDay'
                 },
+                validRange: {
+                    start: new Date(),
+                },
                 slotDuration: '00:30:00',
                 slotLabelInterval: { minutes: 30 },
                 slotMinTime: '09:00:00',
@@ -72,6 +78,7 @@ export default {
     },
     mounted() {
         this.getCitas();
+        this.setupCalendarEvents();
     },
     methods: {
         async getCitas() {
@@ -82,11 +89,61 @@ export default {
                     title: cita.title,
                     start: new Date(cita.start),
                     end: new Date(cita.end),
+                    color: this.getColorForService(cita.title)
                 }));
                 this.calendarOptions.events = this.citas;
             } catch (error) {
                 console.error(error);
             }
+        },
+        setupCalendarEvents() {
+            const fullCalendarApi = this.$refs.fullCalendar.getApi();
+
+            fullCalendarApi.on('datesSet', (arg) => {
+                this.calendarOptions.slotMinTime = this.calculateSlotMinTime(arg.start);
+                fullCalendarApi.setOption('slotMinTime', this.calendarOptions.slotMinTime);
+            });
+        },
+        getColorForService(serviceText) {
+            const regexResult = /\(([^)]+)\)/.exec(serviceText);
+
+            if (regexResult && regexResult.length > 1) {
+                const servicio = regexResult[1];
+
+                const colorMapping = {
+                    'Corte': '#7D3C98',
+                    'Tatuaje': '#1C2833',
+                };
+
+                return colorMapping[servicio];
+            }
+
+            return '';
+        },
+        calculateSlotMinTime(selectedDate) {
+            const currentDate = new Date();
+            const isToday = this.isSameDate(selectedDate, currentDate);
+
+            if (isToday) {
+                const hours = currentDate.getHours();
+                const minutes = currentDate.getMinutes();
+
+                if (hours < 9 || (hours === 9 && minutes === 0)) {
+                    return "09:00:00";
+                } else {
+                    const roundedHour = minutes > 0 ? hours + 1 : hours;
+                    return `${String(roundedHour).padStart(2, '0')}:00:00`;
+                }
+            } else {
+                return "09:00:00";
+            }
+        },
+        isSameDate: function (date1, date2) {
+            return (
+                date1.getFullYear() === date2.getFullYear() &&
+                date1.getMonth() === date2.getMonth() &&
+                date1.getDate() === date2.getDate()
+            );
         },
         customSlotLabelContent(slotInfo) {
             const formattedHour = slotInfo.date.toLocaleString("en-US", {
@@ -160,31 +217,18 @@ export default {
 </script>
 
 <style>
-/* Estilos para mejorar la apariencia en pantallas pequeñas */
-@media (max-width: 576px) {
-    .text-center {
-        text-align: center !important;
+@media (max-width: 575.98px) {
+    .fc .fc-toolbar {
+        align-items: normal;
     }
 
-    .wider-calendar {
-        padding: 0 10px;
-        /* Ajusta el espaciado lateral según sea necesario */
+    .fc .fc-button-group {
+        display: inline-grid;
     }
-}
 
-/* Establecemos el fondo negro y el texto blanco para la página */
-body {
-    background-color: #000;
-    color: #fff;
-}
-
-/* Estilos para el encabezado con la imagen y el título */
-.header-container {
-    display: flex;
-    align-items: center;
-}
-
-.header-container img {
-    border-radius: 50%;
+    .fc-direction-ltr .fc-toolbar>*> :not(:first-child) {
+        margin-top: 10px;
+        margin-left: 0;
+    }
 }
 </style>

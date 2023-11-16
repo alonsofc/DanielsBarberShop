@@ -7,7 +7,7 @@
         <div class="mb-3">
             <label for="horaInicio" class="form-label">De</label>
             <select v-model="cita.horaInicio" id="horaInicio" class="form-select">
-                <option v-for="time in timeOptions" :key="time.value" :value="time.value">
+                <option v-for="time in timeOptionsDe" :key="time.value" :value="time.value">
                     {{ time.label }}
                 </option>
             </select>
@@ -16,7 +16,7 @@
         <div class=" mb-3">
             <label for="horaFin" class="form-label">A</label>
             <select v-model="cita.horaFin" id="horaFin" class="form-select">
-                <option v-for="time in timeOptions" :key="time.value" :value="time.value">
+                <option v-for="time in timeOptionsA" :key="time.value" :value="time.value">
                     {{ time.label }}
                 </option>
             </select>
@@ -62,10 +62,16 @@ export default {
         this.initialize(this.selectedDateTime);
     },
     computed: {
-        timeOptions() {
+        timeOptionsDe() {
             const options = [];
-            for (let hours = 9; hours <= 21; hours++) {
-                for (let minutes = 0; minutes < 60; minutes += 30) {
+            const currentDate = new Date();
+            const currentHour = currentDate.getHours();
+            const currentMinute = currentDate.getMinutes();
+            const startHour = (currentHour < 9) ? 9 : currentHour;
+            const startMinute = (currentHour < 9) ? 0 : Math.ceil(currentMinute / 30) * 30;
+
+            for (let hours = startHour; hours <= 21; hours++) {
+                for (let minutes = (hours === startHour) ? startMinute : 0; minutes < 60; minutes += 30) {
                     const period = hours >= 12 ? 'PM' : 'AM';
                     const formattedHours = hours % 12 || 12;
                     const formattedTime = {
@@ -75,6 +81,15 @@ export default {
                     options.push(formattedTime);
                 }
             }
+            return options;
+        },
+        timeOptionsA() {
+            const options = this.timeOptionsDe.map(option => ({ ...option }));
+            options.push({
+                value: '22:00',
+                label: '10:00 PM',
+            });
+
             return options;
         },
     },

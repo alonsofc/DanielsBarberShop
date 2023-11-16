@@ -22,7 +22,6 @@ const updateCita = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // Utiliza el método update del modelo Cita con la cláusula where
     const [numRowsUpdated, updatedCitas] = await Cita.update(req.body, {
       where: { id: id },
       returning: true,

@@ -57,4 +57,21 @@ api.postRequest = async (url, data, onSuccess, onError, onFinally) => {
   }
 };
 
+// Método genérico DELETE
+api.deleteRequest = async (url, onSuccess, onError, onFinally) => {
+  try {
+    const response = await api.delete(url);
+
+    if (response.status === 200) {
+      toast.success(response.data.message);
+      if (onSuccess) onSuccess(response.data);
+    } else toast.error(response.data.message + " (" + response.status + ")");
+  } catch (error) {
+    if (onError) onError(error);
+    toast.error("Api error: " + error.message);
+  } finally {
+    if (onFinally) onFinally();
+  }
+};
+
 export { api };

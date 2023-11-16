@@ -9,19 +9,7 @@
         </div>
     </div>
 
-    <div class="modal fade" tabindex="-1" ref="modalCita">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Cita</h5>
-                    <button type="button" class="btn-close" @click="closeModal"></button>
-                </div>
-                <div class="modal-body">
-                    <CitaForm ref="citaForm" :selectedDateTime="selectedDateTime" @citaGuardada="handleCitaGuardada" />
-                </div>
-            </div>
-        </div>
-    </div>
+    <CitaForm ref="citaForm" :selectedDateTime="selectedDateTime" @citaGuardada="getCitas" />
 </template>
 
 <script>
@@ -30,15 +18,16 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import esLocale from '@fullcalendar/core/locales/es'
+import CitaForm from './CitaForm.vue';
 import { api } from '../configs/axiosConfig.js';
 import { toast } from "../configs/toastConfig.js";
-import CitaForm from './CitaForm.vue';
 
 export default {
     components: {
         FullCalendar,
         CitaForm
     },
+
     data() {
         return {
             citas: [],
@@ -67,33 +56,87 @@ export default {
             }
         };
     },
+
     mounted() {
         this.getCitas();
         this.setupCalendarEvents();
     },
+
     methods: {
         async getCitas() {
             const handleSuccess = (response) => {
-                this.citas = response.map(cita => ({
-                    id: cita.id,
-                    title: cita.title,
-                    start: new Date(cita.start),
-                    end: new Date(cita.end),
-                    color: this.getColorForService(cita.title)
-                }));
+                const currentDate = new Date();
+
+                this.citas = response
+                    .filter(cita => new Date(cita.start) >= currentDate)
+                    .map(cita => ({
+                        id: cita.id,
+                        title: cita.title,
+                        start: new Date(cita.start),
+                        end: new Date(cita.end),
+                        color: this.getColorForService(cita.title)
+                    }));
+
                 this.calendarOptions.events = this.citas;
             };
 
             await api.getRequest("", handleSuccess);
         },
+
+        handleDateClick: function (arg) {
+            const fullCalendarApi = this.$refs.fullCalendar.getApi();
+
+            if (fullCalendarApi.currentData.currentViewType === "timeGridDay") {
+                this.selectedDateTime = arg.date;
+
+                if (!this.citas || !this.hasConflicts(arg.date)) {
+                    this.$refs.citaForm.initialize(this.selectedDateTime);
+                    this.$refs.citaForm.openModal(false);
+                } else
+                    toast.warning("Ya existe una cita a esta misma hora.");
+            }
+            else {
+                fullCalendarApi.gotoDate(arg.date);
+                fullCalendarApi.changeView("timeGridDay");
+            }
+        },
+
+        handleEventClick: function (clickInfo) {
+            const fullCalendarApi = this.$refs.fullCalendar.getApi();
+
+            if (fullCalendarApi.currentData.currentViewType !== "timeGridDay") {
+                fullCalendarApi.gotoDate(clickInfo.event.start);
+                fullCalendarApi.changeView("timeGridDay");
+            }
+
+            this.selectedDateTime = clickInfo.event.start;
+            const existingCita = this.getExistingCita(this.selectedDateTime);
+
+            if (existingCita) {
+                this.$refs.citaForm.initialize(this.selectedDateTime, existingCita);
+                this.$refs.citaForm.openModal(true);
+            }
+        },
+
         setupCalendarEvents() {
             const fullCalendarApi = this.$refs.fullCalendar.getApi();
 
             fullCalendarApi.on('datesSet', (arg) => {
                 this.calendarOptions.slotMinTime = this.calculateSlotMinTime(arg.start);
                 fullCalendarApi.setOption('slotMinTime', this.calendarOptions.slotMinTime);
+                this.getCitas();
             });
         },
+
+        customSlotLabelContent(slotInfo) {
+            const formattedHour = slotInfo.date.toLocaleString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+            });
+            return formattedHour;
+        },
+
         getColorForService(serviceText) {
             const regexResult = /\(([^)]+)\)/.exec(serviceText);
 
@@ -110,6 +153,7 @@ export default {
 
             return '';
         },
+
         calculateSlotMinTime(selectedDate) {
             const currentDate = new Date();
             const isToday = this.isSameDate(selectedDate, currentDate);
@@ -130,6 +174,7 @@ export default {
                 return this.$config.defaultStartTime;
             }
         },
+
         isSameDate: function (date1, date2) {
             return (
                 date1.getFullYear() === date2.getFullYear() &&
@@ -137,73 +182,20 @@ export default {
                 date1.getDate() === date2.getDate()
             );
         },
-        customSlotLabelContent(slotInfo) {
-            const formattedHour = slotInfo.date.toLocaleString("en-US", {
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-            });
-            return formattedHour;
-        },
-        handleDateClick: function (arg) {
-            const fullCalendarApi = this.$refs.fullCalendar.getApi();
 
-            if (fullCalendarApi.currentData.currentViewType === "timeGridDay") {
-                this.selectedDateTime = arg.date;
-
-                if (!this.citas || !this.hasConflicts(arg.date)) {
-                    this.$refs.citaForm.initialize(this.selectedDateTime);
-                    this.openModal();
-                } else
-                    toast.warning("Ya existe una cita a esta misma hora.");
-            }
-            else {
-                fullCalendarApi.gotoDate(arg.date);
-                fullCalendarApi.changeView("timeGridDay");
-            }
-        },
-        handleEventClick: function (clickInfo) {
-            const fullCalendarApi = this.$refs.fullCalendar.getApi();
-
-            if (fullCalendarApi.currentData.currentViewType !== "timeGridDay") {
-                fullCalendarApi.gotoDate(clickInfo.event.start);
-                fullCalendarApi.changeView("timeGridDay");
-            }
-
-            this.selectedDateTime = clickInfo.event.start;
-            const existingCita = this.getExistingCita(this.selectedDateTime);
-
-            if (existingCita) {
-                this.$refs.citaForm.initialize(this.selectedDateTime, existingCita);
-                this.openModal();
-            }
-        },
-        handleCitaGuardada() {
-            this.getCitas();
-            this.closeModal();
-        },
         getExistingCita(dateTime) {
             return this.citas.find((cita) =>
                 dateTime >= new Date(cita.start) && dateTime < new Date(cita.end)
             );
         },
+
         hasConflicts(dateTime) {
             const hasConflict = this.citas.some((cita) =>
                 dateTime >= new Date(cita.start) && dateTime < new Date(cita.end)
             );
             return hasConflict;
-        },
-        openModal() {
-            this.$refs.modalCita.classList.add("show", "modal-fade");
-            this.$refs.modalCita.style.display = "block";
-            document.body.classList.add("modal-open");
-        },
-        closeModal() {
-            this.$refs.modalCita.classList.remove("show", "modal-fade");
-            this.$refs.modalCita.style.display = "none";
-            document.body.classList.remove("modal-open");
-        },
-    },
+        }
+    }
 };
 </script>
 

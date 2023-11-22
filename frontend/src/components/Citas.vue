@@ -68,7 +68,7 @@ export default {
                 const currentDate = new Date();
 
                 this.citas = response
-                    .filter(cita => new Date(cita.start) >= currentDate)
+                    // .filter(cita => new Date(cita.start) >= currentDate)
                     .map(cita => ({
                         id: cita.id,
                         title: cita.title,

@@ -5,6 +5,8 @@ import { toast } from "./toastConfig.js";
 // Instancia de Axios
 const api = axios.create({ baseURL: config.apiBaseUrl });
 
+console.log(process.env.VITE_API_BASE_URL);
+
 // Método genérico GET
 api.getRequest = async (url, onSuccess, onError, onFinally) => {
   try {

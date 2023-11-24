@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="header-container p-2 d-flex align-items-center justify-content-center">
-            <img src="../assets/logo.jpg" alt="Daniel's Barber Shop" class="mr-3" width="50" height="50" />
+            <img src="../assets/logo.jpg" alt="Daniel's Barber Shop Logo" class="mr-3" width="50" height="50" />
             <h1 class="text-light m-0">{{ $config.ProjectName }}</h1>
         </div>
         <div class="container bg-light pt-3">
@@ -45,9 +45,9 @@ export default {
                     center: 'title',
                     right: 'dayGridMonth,timeGridDay'
                 },
-                validRange: {
-                    start: new Date(),
-                },
+                // validRange: {
+                //     start: new Date(),
+                // },
                 slotDuration: '00:30:00',
                 slotLabelInterval: { minutes: 30 },
                 slotMinTime: this.$config.defaultStartTime,
@@ -59,7 +59,7 @@ export default {
 
     mounted() {
         this.getCitas();
-        this.setupCalendarEvents();
+        //this.setupCalendarEvents();
     },
 
     methods: {
@@ -75,7 +75,7 @@ export default {
                         start: new Date(cita.start),
                         end: new Date(cita.end),
                         color: this.getColorForService(cita.title)
-                    }));
+                    }))
 
                 this.calendarOptions.events = this.citas;
             };
@@ -84,9 +84,15 @@ export default {
         },
 
         handleDateClick: function (arg) {
+            const currentDate = new Date();
+
+            if (arg.date.getDate() < currentDate.getDate()) return;
+
             const fullCalendarApi = this.$refs.fullCalendar.getApi();
 
             if (fullCalendarApi.currentData.currentViewType === "timeGridDay") {
+                if (arg.date < currentDate) return;
+
                 this.selectedDateTime = arg.date;
 
                 if (!this.citas || !this.hasConflicts(arg.date)) {
@@ -104,12 +110,13 @@ export default {
         handleEventClick: function (clickInfo) {
             const fullCalendarApi = this.$refs.fullCalendar.getApi();
 
+            this.selectedDateTime = clickInfo.event.start;
+
             if (fullCalendarApi.currentData.currentViewType !== "timeGridDay") {
-                fullCalendarApi.gotoDate(clickInfo.event.start);
+                fullCalendarApi.gotoDate(this.selectedDateTime);
                 fullCalendarApi.changeView("timeGridDay");
             }
 
-            this.selectedDateTime = clickInfo.event.start;
             const existingCita = this.getExistingCita(this.selectedDateTime);
 
             if (existingCita) {
@@ -118,15 +125,15 @@ export default {
             }
         },
 
-        setupCalendarEvents() {
-            const fullCalendarApi = this.$refs.fullCalendar.getApi();
+        // setupCalendarEvents() {
+        //     const fullCalendarApi = this.$refs.fullCalendar.getApi();
 
-            fullCalendarApi.on('datesSet', (arg) => {
-                this.calendarOptions.slotMinTime = this.calculateSlotMinTime(arg.start);
-                fullCalendarApi.setOption('slotMinTime', this.calendarOptions.slotMinTime);
-                this.getCitas();
-            });
-        },
+        //     fullCalendarApi.on('datesSet', (arg) => {
+        //         this.calendarOptions.slotMinTime = this.calculateSlotMinTime(arg.start);
+        //         fullCalendarApi.setOption('slotMinTime', this.calendarOptions.slotMinTime);
+        //         this.getCitas();
+        //     });
+        // },
 
         customSlotLabelContent(slotInfo) {
             const formattedHour = slotInfo.date.toLocaleString("en-US", {
@@ -155,24 +162,24 @@ export default {
         },
 
         calculateSlotMinTime(selectedDate) {
-            const currentDate = new Date();
-            const isToday = this.isSameDate(selectedDate, currentDate);
+            // const currentDate = new Date();
+            // const isToday = this.isSameDate(selectedDate, currentDate);
 
-            if (isToday) {
-                const hours = currentDate.getHours();
-                const minutes = currentDate.getMinutes();
-                const defaultStartTime = parseInt(this.$config.defaultStartTime.slice(0, 2));
+            // if (isToday) {
+            //     const hours = currentDate.getHours();
+            //     const minutes = currentDate.getMinutes();
+            //     const defaultStartTime = parseInt(this.$config.defaultStartTime.slice(0, 2));
 
-                if (hours < defaultStartTime || (hours === defaultStartTime && minutes === 0)) {
-                    return this.$config.defaultStartTime;
-                } else {
-                    const roundedHour = (minutes >= 30) ? hours + 1 : hours;
-                    const roundedMinutes = (minutes >= 30) ? 0 : 30;
-                    return `${String(roundedHour).padStart(2, '0')}:${String(roundedMinutes).padStart(2, '0')}:00`;
-                }
-            } else {
-                return this.$config.defaultStartTime;
-            }
+            //     if (hours < defaultStartTime || (hours === defaultStartTime && minutes === 0)) {
+            //         return this.$config.defaultStartTime;
+            //     } else {
+            //         const roundedHour = (minutes >= 30) ? hours + 1 : hours;
+            //         const roundedMinutes = (minutes >= 30) ? 0 : 30;
+            //         return `${String(roundedHour).padStart(2, '0')}:${String(roundedMinutes).padStart(2, '0')}:00`;
+            //     }
+            // } else
+            //     return this.$config.defaultStartTime;
+            return this.$config.defaultStartTime;
         },
 
         isSameDate: function (date1, date2) {

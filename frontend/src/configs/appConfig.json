@@ -1,6 +1,5 @@
 {
     "ProjectName": "Daniel's Barber Shop",
-    "apiBaseUrl": "https://danielsbk.onrender.com/citas",
     "defaultStartTime": "09:00:00",
     "defaultEndTime": "22:00:00",
     "defaultLabelEndTime": "10:00 PM",

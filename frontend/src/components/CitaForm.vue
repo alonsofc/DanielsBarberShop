@@ -14,7 +14,7 @@
 
                         <div class="mb-3">
                             <label for="horaInicio" class="form-label">De</label>
-                            <select v-model="cita.horaInicio" id="horaInicio" class="form-select">
+                            <select v-model="cita.horaInicio" id="horaInicio" class="form-select" :disabled="cita.disabled">
                                 <option v-for="time in timeOptionsDe" :key="time.value" :value="time.value">
                                     {{ time.label }}
                                 </option>
@@ -23,7 +23,7 @@
 
                         <div class=" mb-3">
                             <label for="horaFin" class="form-label">A</label>
-                            <select v-model="cita.horaFin" id="horaFin" class="form-select">
+                            <select v-model="cita.horaFin" id="horaFin" class="form-select" :disabled="cita.disabled">
                                 <option v-for="time in timeOptionsA" :key="time.value" :value="time.value">
                                     {{ time.label }}
                                 </option>
@@ -33,12 +33,13 @@
                         <div class="mb-3">
                             <label for="cliente" class="form-label">Cliente</label>
                             <input type="text" v-model="cita.cliente" class="form-control" id="cliente" required
-                                autocomplete="off">
+                                autocomplete="off" :disabled="cita.disabled">
                         </div>
 
                         <div class="mb-3">
                             <label for="servicio" class="form-label">Servicio</label>
-                            <select v-model="cita.servicio" class="form-select" id="servicio" required>
+                            <select v-model="cita.servicio" class="form-select" id="servicio" :disabled="cita.disabled"
+                                required>
                                 <option :value="getCorteOptionValue()">{{ $config.optionCorte }}</option>
                                 <option :value="getTatuajeOptionValue()">{{ $config.optionTatuaje }}</option>
                             </select>
@@ -47,7 +48,7 @@
                     <div class="modal-footer">
                         <button v-if="showDeleteButton" type="button" class="btn btn-danger"
                             @click="deleteCita">Eliminar</button>
-                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <button type="submit" class="btn btn-primary" :disabled="cita.disabled">Guardar</button>
                     </div>
                 </form>
             </div>
@@ -72,7 +73,8 @@ export default {
                 horaInicio: '',
                 horaFin: '',
                 cliente: '',
-                servicio: this.$config.optionCorte
+                servicio: this.$config.optionCorte,
+                disabled: false
             },
             showDeleteButton: false
         };
@@ -89,16 +91,17 @@ export default {
             let currentHour = currentDate.getHours();
             let currentMinute = currentDate.getMinutes();
 
-            if (this.selectedDateTime !== null && (this.selectedDateTime.getDate() !== currentDate.getDate())) {
-                currentHour = 0;
-                currentMinute = 0;
-            }
+            // if (this.selectedDateTime !== null && (this.selectedDateTime.getDate() !== currentDate.getDate())) {
+            //     currentHour = 0;
+            //     currentMinute = 0;
+            // }
 
-            const defaultStartTime = parseInt(this.$config.defaultStartTime.slice(0, 2));
+            const startHour = parseInt(this.$config.defaultStartTime.slice(0, 2));
             const defaultEndTime = parseInt(this.$config.defaultEndTime.slice(0, 2));
 
-            const startHour = (currentHour < defaultStartTime) ? defaultStartTime : currentHour;
-            const startMinute = (currentHour < defaultStartTime) ? 0 : Math.ceil(currentMinute / 30) * 30;
+            // const startHour = (currentHour < defaultStartTime) ? defaultStartTime : currentHour;
+            // const startMinute = (currentHour < defaultStartTime) ? 0 : Math.ceil(currentMinute / 30) * 30;
+            const startMinute = 0;
 
             for (let hours = startHour; hours < defaultEndTime; hours++) {
                 for (let minutes = (hours === startHour) ? startMinute : 0; minutes < 60; minutes += 30) {
@@ -141,6 +144,10 @@ export default {
                 this.cita.cliente = cliente;
                 this.cita.servicio = servicio.slice(0, -1);
                 this.cita.horaFin = this.formatLocalTime(existingCita.end);
+
+                if (existingCita.start < new Date()) {
+                    this.cita.disabled = true;
+                }
             }
             else if (dateTime) {
                 const horaFinDate = new Date(dateTime.getTime() + 30 * 60000);

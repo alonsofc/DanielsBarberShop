@@ -3,7 +3,7 @@ import App from "./App.vue";
 import "bootstrap/dist/css/bootstrap.min.css";
 import MoshaToast from "mosha-vue-toastify";
 import "mosha-vue-toastify/dist/style.css";
-import config from "./configs/systemConfig.json";
+import config from "./configs/appConfig.json";
 
 const app = createApp(App);
 

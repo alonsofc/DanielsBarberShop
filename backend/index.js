@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 app.use("/citas", citasRoutes);
 
 sequelize
-  .sync({ force: false }) // Cambiar a `true` para re-crear las tablas en cada reinicio (solo para desarrollo)
+  .sync({ alter: true }) // Cambiar force a `true` para re-crear las tablas en cada reinicio (solo para desarrollo)
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);

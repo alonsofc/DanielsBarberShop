@@ -44,11 +44,19 @@
                                 <option :value="getTatuajeOptionValue()">{{ $config.optionTatuaje }}</option>
                             </select>
                         </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="false" id="sinpeMovil"
+                                    v-model="cita.sinpe">
+                                <label class="form-check-label" for="sinpeMovil">SINPE Móvil</label>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button v-if="showDeleteButton" type="button" class="btn btn-danger"
                             @click="deleteCita">Eliminar</button>
-                        <button type="submit" class="btn btn-primary" :disabled="cita.disabled">Guardar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
                     </div>
                 </form>
             </div>
@@ -74,6 +82,7 @@ export default {
                 horaFin: '',
                 cliente: '',
                 servicio: this.$config.optionCorte,
+                sinpe: false,
                 disabled: false
             },
             showDeleteButton: false
@@ -144,6 +153,9 @@ export default {
                 this.cita.cliente = cliente;
                 this.cita.servicio = servicio.slice(0, -1);
                 this.cita.horaFin = this.formatLocalTime(existingCita.end);
+                this.cita.sinpe = existingCita.sinpe;
+
+                console.log(existingCita);
 
                 if (existingCita.start < new Date()) {
                     this.cita.disabled = true;
@@ -167,7 +179,8 @@ export default {
             const appointment = {
                 start: initDate,
                 end: endDate,
-                title: `${this.cita.cliente} (${this.cita.servicio})`
+                title: `${this.cita.cliente} (${this.cita.servicio})`,
+                sinpe: this.cita.sinpe
             };
 
             const handleSuccess = (response) => {
@@ -253,7 +266,8 @@ export default {
                 horaInicio: '',
                 horaFin: '',
                 cliente: '',
-                servicio: this.$config.optionCorte
+                servicio: this.$config.optionCorte,
+                sinpe: false
             };
         },
 
@@ -272,3 +286,4 @@ export default {
     },
 };
 </script>
+

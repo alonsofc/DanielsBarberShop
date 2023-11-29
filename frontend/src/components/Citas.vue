@@ -74,6 +74,7 @@ export default {
                         title: cita.title,
                         start: new Date(cita.start),
                         end: new Date(cita.end),
+                        sinpe: cita.sinpe,
                         color: this.getColorForService(cita.title)
                     }))
 

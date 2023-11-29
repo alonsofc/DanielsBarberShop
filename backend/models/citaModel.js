@@ -1,19 +1,30 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../db");
 
-const Cita = sequelize.define("citas", {
-  start: {
-    type: DataTypes.DATE,
-    allowNull: false,
+const Cita = sequelize.define(
+  "citas",
+  {
+    start: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    end: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    sinpe: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
   },
-  end: {
-    type: DataTypes.DATE,
-    allowNull: false,
-  },
-  title: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-});
+  {
+    timestamps: false, // Desactiva las columnas createdAt y updatedAt
+  }
+);
 
 module.exports = Cita;
